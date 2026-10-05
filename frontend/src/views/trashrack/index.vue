@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('trashrack')
 const columns = ["栅体编号", "所属机组", "前后压差", "清污次数", "清污方式", "清理日期", "清理人员", "栅体状态"]
 const actions = ["安排清理", "确认完成", "登记损坏"]
 const statuses = ["待清理", "清理中", "已清理", "已损坏"]
-const stats = [{"label": "待清理栅体", "value": 0}, {"label": "已清理栅体", "value": 0}, {"label": "最大压差", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '拦污栅列表读取失败'
   }

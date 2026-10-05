@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('seepage')
 const columns = ["测点编号", "测点位置", "测压管水位", "渗流量", "扬压力", "警戒数值", "监测日期", "测点状态"]
 const actions = ["提交监测", "发布预警", "确认处理"]
 const statuses = ["正常", "预警", "报警", "已处理"]
-const stats = [{"label": "正常测点", "value": 0}, {"label": "预警测点", "value": 0}, {"label": "最大渗流量", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '渗流监测列表读取失败'
   }

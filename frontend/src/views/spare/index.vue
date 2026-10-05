@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('spare')
 const columns = ["备件编号", "备件名称", "规格型号", "适用设备", "存放位置", "现有数量", "最低储备量", "备件状态"]
 const actions = ["办理验收", "领用备件", "提交补充"]
 const statuses = ["待验收", "已登记", "已领用", "待补充"]
-const stats = [{"label": "已登记备件", "value": 0}, {"label": "待补充备件", "value": 0}, {"label": "本月领用", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '备品备件列表读取失败'
   }

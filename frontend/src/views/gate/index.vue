@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('gate')
 const columns = ["闸门编号", "闸门类型", "孔口尺寸", "当前开度", "启闭机型号", "操作人员", "操作时间", "闸门状态"]
 const actions = ["开启闸门", "关闭闸门", "登记故障"]
 const statuses = ["待操作", "运行中", "已关闭", "故障"]
-const stats = [{"label": "开启闸门", "value": 0}, {"label": "关闭闸门", "value": 0}, {"label": "故障闸门", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '闸门启闭列表读取失败'
   }

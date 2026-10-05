@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('cooling')
 const columns = ["系统编号", "供水类型", "供水压力", "供水流量", "水温数值", "滤水器压差", "检查日期", "系统状态"]
 const actions = ["提交检查", "标记异常", "停运系统"]
 const statuses = ["待检查", "运行中", "异常", "已停运"]
-const stats = [{"label": "运行系统", "value": 0}, {"label": "异常系统", "value": 0}, {"label": "待检查系统", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '技术供水列表读取失败'
   }

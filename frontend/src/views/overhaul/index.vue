@@ -24,6 +24,10 @@
       </span>
     </p>
 
+    <p class="page-hint">
+      开工资格与机组运行页同一份口径：检修机组须已停机（停机备用或故障停机）才允许开工；故障机组办理完工后自动回到停机备用，关联缺陷一并归档。
+    </p>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -43,7 +47,14 @@
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="String(row.id)">
-          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+          <td v-for="column in columns" :key="column">
+            <template v-if="column === '检修机组'">
+              {{ row[column] ?? '—' }}
+              <span v-if="linkedUnitStatus(row)" class="linked-unit">（机组{{ linkedUnitStatus(row) }}）</span>
+              <span v-else class="linked-unit muted">（未关联机组）</span>
+            </template>
+            <template v-else>{{ row[column] ?? '—' }}</template>
+          </td>
           <td>{{ row.status }}</td>
           <td class="row-actions">
             <button
@@ -74,20 +85,23 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
+  unitStatusByCode,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('overhaul')
 const columns = ["工作票号", "检修机组", "检修级别", "计划工期", "实际工期", "工作负责人", "验收人员", "检修状态"]
 const actions = ["提交审批", "开工检修", "办理完工"]
 const statuses = ["待审批", "已批准", "检修中", "已完工"]
-const stats = [{"label": "待审批工作票", "value": 0}, {"label": "检修中机组", "value": 0}, {"label": "已完工检修", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
+const unitStatuses = ref<Record<string, string>>({})
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -122,12 +136,18 @@ function runAction(action: string, row: EntryRow) {
   reload()
 }
 
+function linkedUnitStatus(row: EntryRow): string {
+  return unitStatuses.value[String(row['检修机组'] ?? '')] ?? ''
+}
+
 function reload() {
   errorMessage.value = ''
   try {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
+    unitStatuses.value = unitStatusByCode()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '机组检修列表读取失败'
   }

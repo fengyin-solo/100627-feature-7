@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('displacement')
 const columns = ["测点编号", "测点高程", "水平位移", "垂直位移", "累计位移", "允许位移", "监测频次", "测点状态"]
 const actions = ["提交观测", "标记超限", "提交复核"]
 const statuses = ["待观测", "观测中", "超限", "已复核"]
-const stats = [{"label": "观测中测点", "value": 0}, {"label": "超限测点", "value": 0}, {"label": "平均位移", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '位移监测列表读取失败'
   }

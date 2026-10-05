@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('crew')
 const columns = ["人员编号", "姓名", "岗位", "持证类型", "证书有效期", "所属班组", "联系电话", "在场状态"]
 const actions = ["办理进场", "办理离场", "登记停工"]
 const statuses = ["待进场", "在场", "已离场", "已停工"]
-const stats = [{"label": "在场人员", "value": 0}, {"label": "持证人员", "value": 0}, {"label": "证书即将到期", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '检修人员列表读取失败'
   }

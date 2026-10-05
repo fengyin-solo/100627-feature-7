@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('bearing')
 const columns = ["轴承编号", "所属机组", "上导温度", "下导温度", "油位高度", "振动数值", "检测日期", "轴承状态"]
 const actions = ["提交检测", "标记偏高", "确认检修"]
 const statuses = ["正常", "温度偏高", "待检修", "已检修"]
-const stats = [{"label": "正常轴承", "value": 0}, {"label": "温度偏高轴承", "value": 0}, {"label": "待检修轴承", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '导轴承列表读取失败'
   }

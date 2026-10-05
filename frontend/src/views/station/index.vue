@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('station')
 const columns = ["电站编号", "电站名称", "装机容量", "机组台数", "设计水头", "投运日期", "所属流域", "运行状态"]
 const actions = ["投入试运行", "确认投产", "申请停机"]
 const statuses = ["在建", "试运行", "正常运行", "停机检修"]
-const stats = [{"label": "总装机容量", "value": 0}, {"label": "正常运行电站", "value": 0}, {"label": "检修中电站", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '电站台账列表读取失败'
   }

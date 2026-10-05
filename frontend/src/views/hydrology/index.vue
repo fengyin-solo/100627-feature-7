@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('hydrology')
 const columns = ["记录编号", "观测时间", "上游水位", "下游水位", "入库流量", "出库流量", "值守人员", "调度状态"]
 const actions = ["提交观测", "下达调度", "提交复核"]
 const statuses = ["待观测", "已观测", "已调度", "已复核"]
-const stats = [{"label": "今日入库流量", "value": 0}, {"label": "今日出库流量", "value": 0}, {"label": "待调度记录", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '水情调度列表读取失败'
   }

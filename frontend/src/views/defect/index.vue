@@ -24,6 +24,10 @@
       </span>
     </p>
 
+    <p class="page-hint">
+      待处理 → 处理中 → 已消除单向推进，已消除即归档；机组「登记故障」会自动落到这份清单，重复登记以先入库的为准。
+    </p>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -74,20 +78,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('defect')
-const columns = ["缺陷编号", "设备名称", "缺陷描述", "缺陷等级", "发现日期", "处理期限", "处理人员", "缺陷状态"]
+const columns = ["缺陷编号", "设备名称", "缺陷描述", "缺陷等级", "发现日期", "处理期限", "处理人员", "来源", "缺陷状态"]
 const actions = ["派发处理", "确认消除", "登记挂账"]
 const statuses = ["待处理", "处理中", "已消除", "已挂账"]
-const stats = [{"label": "待处理缺陷", "value": 0}, {"label": "处理中缺陷", "value": 0}, {"label": "已消除缺陷", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +133,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '缺陷处置列表读取失败'
   }

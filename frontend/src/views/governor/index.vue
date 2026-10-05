@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('governor')
 const columns = ["装置编号", "所属机组", "油压值", "导叶开度", "接力器行程", "开度限位", "校验日期", "装置状态"]
 const actions = ["提交校验", "标记异常", "停用装置"]
 const statuses = ["待校验", "正常", "异常", "已停用"]
-const stats = [{"label": "正常调速器", "value": 0}, {"label": "待校验装置", "value": 0}, {"label": "异常装置", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '调速器列表读取失败'
   }

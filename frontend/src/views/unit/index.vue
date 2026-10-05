@@ -24,6 +24,10 @@
       </span>
     </p>
 
+    <p class="page-hint">
+      状态链：待启动 →（开机并网）→ 运行中 →（停机转备）→ 停机备用 →（转待启动）→ 待启动；登记故障后须走完检修闭环（检修工作票办理完工）才回停机备用，跳步操作一律退回。
+    </p>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -74,20 +78,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('unit')
-const columns = ["机组编号", "机组型号", "额定转速", "有功出力", "无功出力", "累计运行小时", "振动数值", "运行状态"]
-const actions = ["开机并网", "停机转备", "登记故障"]
+const columns = ["机组编号", "机组型号", "额定转速", "有功出力", "无功出力", "累计运行小时", "振动数值", "最近并网时刻", "最近停机时刻", "数据来源", "运行状态"]
+const actions = ["开机并网", "停机转备", "转待启动", "登记故障"]
 const statuses = ["待启动", "运行中", "停机备用", "故障停机"]
-const stats = [{"label": "运行中机组", "value": 0}, {"label": "备用机组", "value": 0}, {"label": "故障机组", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +133,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '机组运行列表读取失败'
   }

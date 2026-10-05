@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('excitation')
 const columns = ["装置编号", "所属机组", "励磁电压", "励磁电流", "可控硅温度", "强励次数", "检查日期", "装置状态"]
 const actions = ["提交检查", "标记异常", "退出运行"]
 const statuses = ["待检查", "正常", "异常", "已退出"]
-const stats = [{"label": "正常装置", "value": 0}, {"label": "异常装置", "value": 0}, {"label": "待检查装置", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '励磁系统列表读取失败'
   }

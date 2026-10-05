@@ -24,6 +24,10 @@
       </span>
     </p>
 
+    <p class="page-hint">
+      可调出力与机组运行页读同一份机组数据：只计运行中与停机备用机组的有功出力，故障停机、待启动机组不计入。
+    </p>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -74,20 +78,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('generation')
 const columns = ["计划编号", "计划日期", "计划出力", "实际出力", "日发电量", "上网电量", "完成比率", "计划状态"]
 const actions = ["提交编制", "下达计划", "确认完成"]
 const statuses = ["待编制", "已下达", "执行中", "已完成"]
-const stats = [{"label": "计划发电量", "value": 0}, {"label": "实际发电量", "value": 0}, {"label": "计划完成率", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +133,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '发电计划列表读取失败'
   }

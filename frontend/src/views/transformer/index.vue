@@ -74,20 +74,21 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  computeStats,
   downloadEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, StatItem } from '@/data/types'
 
 const meta = moduleMeta('transformer')
 const columns = ["变压器编号", "容量等级", "油温", "绕组温度", "油位", "瓦斯保护", "试验日期", "运行状态"]
 const actions = ["提交试验", "发布告警", "停运检修"]
 const statuses = ["待试验", "运行中", "告警", "停运"]
-const stats = [{"label": "运行变压器", "value": 0}, {"label": "告警变压器", "value": 0}, {"label": "待试验变压器", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const stats = ref<StatItem[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +129,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    stats.value = computeStats(meta.key)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '主变压器列表读取失败'
   }
