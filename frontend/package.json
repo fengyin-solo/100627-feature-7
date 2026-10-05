@@ -8,7 +8,10 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "check:flow": "node scripts/run-checks.mjs flow",
+    "check:migrate": "node scripts/run-checks.mjs migrate",
+    "check:all": "node scripts/run-checks.mjs flow && node scripts/run-checks.mjs migrate"
   },
   "dependencies": {
     "pinia": "^2.1.7",

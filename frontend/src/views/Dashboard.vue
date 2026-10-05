@@ -17,7 +17,7 @@
     </div>
     <table class="data-table">
       <thead>
-        <tr><th>业务模块</th><th>今日新增</th><th>待处理</th><th>异常量</th></tr>
+        <tr><th>业务模块</th><th>登记总量（=列表条数）</th><th>待处理</th><th>异常量</th></tr>
       </thead>
       <tbody>
         <tr v-for="row in moduleRows" :key="row.name">
@@ -29,6 +29,7 @@
       </tbody>
     </table>
     <footer class="page-foot">
+      <span>各模块卡片数字直接取各模块列表全量统计（含已归档/已完工等终态），与列表条数同源同口径</span>
       <span>数据保存在本机浏览器里，换浏览器或清缓存会回到示例数据</span>
     </footer>
   </section>
